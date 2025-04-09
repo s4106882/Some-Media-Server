@@ -1,0 +1,25 @@
+name: Run Python Script with GitHub Secret
+
+on:
+  push:
+    branches:
+      - main  # Trigger this on push to the 'main' branch
+
+jobs:
+  run-script:
+    runs-on: windows-latest  # This specifies Windows as the environment for running the job
+
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v2  # Fetch the code from your repository
+
+      - name: Set up Python
+        uses: actions/setup-python@v2  # Set up Python for the job
+        with:
+          python-version: '3.x'  # Specify the Python version
+
+      - name: Run Python script with secrets
+        run: |
+          python my_script.py  # Run your Python script
+        env:
+          EXTERNAL_LINK: ${{ secrets.EXTERNAL_LINK }}  # Inject the secret as an environment variable
