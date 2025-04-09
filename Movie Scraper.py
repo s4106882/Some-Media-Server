@@ -5,6 +5,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support import expected_conditions as EC
 import os
+import External
 
 def scrape_movies():
     options = webdriver.ChromeOptions()
@@ -13,9 +14,9 @@ def scrape_movies():
     options.add_argument('--disable-images')
     options.add_argument('--disable-extensions')
     driver = webdriver.Chrome(options=options)
-    
-    #search_text = str(input())
-    driver.get(f'https://flickystream.com/search?q={search_text}')
+    print(External.EXTERNAL_LINK)
+    search_text = str(input())
+    driver.get(f'{External.EXTERNAL_LINK}{search_text}') #https://flickystream.com/search?q=
     driver.maximize_window()
     
     WebDriverWait(driver, 10).until(
