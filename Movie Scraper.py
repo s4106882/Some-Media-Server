@@ -4,6 +4,7 @@ from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support import expected_conditions as EC
+import os
 
 def scrape_movies():
     options = webdriver.ChromeOptions()
@@ -14,7 +15,7 @@ def scrape_movies():
     driver = webdriver.Chrome(options=options)
     
     search_text = str(input())
-    driver.get(f'https://flickystream.com/search?q={search_text}')
+    driver.get(f'{os.getenv('EXTERNAL_LINK')}{search_text}')
     driver.maximize_window()
     
     WebDriverWait(driver, 10).until(
