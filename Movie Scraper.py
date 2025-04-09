@@ -7,8 +7,6 @@ from selenium.webdriver.support import expected_conditions as EC
 import os
 
 def scrape_movies():
-    search_text = os.getenv('SEARCH_TEXT', 'Minecraft')
-    
     options = webdriver.ChromeOptions()
     options.add_argument('user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36')
     options.add_argument('--headless')
@@ -17,7 +15,7 @@ def scrape_movies():
     driver = webdriver.Chrome(options=options)
     
     #search_text = str(input())
-    driver.get(f'{os.getenv("EXTERNAL_LINK")}{search_text}')
+    driver.get(f'https://flickystream.com/search?q={search_text}')
     driver.maximize_window()
     
     WebDriverWait(driver, 10).until(
