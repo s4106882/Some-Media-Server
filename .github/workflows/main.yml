@@ -21,4 +21,4 @@ jobs:
       - name: Set EXTERNAL_LINK and Run Python script
         run: |
           echo "EXTERNAL_LINK=${{ secrets.EXTERNAL_LINK }}" >> $GITHUB_ENV  # Set the EXTERNAL_LINK secret as an environment variable
-          python "Movie Scraper.py"  # Run the main script
+          python External.py  # Run the main script
