@@ -20,6 +20,6 @@ jobs:
 
       - name: Run Python script with secrets
         run: |
-          python my_script.py  # Run your Python script
+          python Movie Scraper.py  # Run your Python script
         env:
           EXTERNAL_LINK: ${{ secrets.EXTERNAL_LINK }}  # Inject the secret as an environment variable
