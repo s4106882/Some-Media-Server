@@ -16,7 +16,7 @@ def scrape_movies():
     options.add_argument('--disable-extensions')
     driver = webdriver.Chrome(options=options)
     
-    search_text = str(input())
+    #search_text = str(input())
     driver.get(f'{os.getenv("EXTERNAL_LINK")}{search_text}')
     driver.maximize_window()
     
