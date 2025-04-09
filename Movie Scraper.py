@@ -15,7 +15,7 @@ def scrape_movies():
     driver = webdriver.Chrome(options=options)
     
     search_text = str(input())
-    driver.get(f'{os.getenv('EXTERNAL_LINK')}{search_text}')
+    driver.get(f'{os.getenv("EXTERNAL_LINK")}{search_text}')
     driver.maximize_window()
     
     WebDriverWait(driver, 10).until(
