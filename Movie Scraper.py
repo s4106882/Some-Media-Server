@@ -8,17 +8,22 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.action_chains import ActionChains
 import sys
+from functools import partial
+import requests
 
 class MediaServerApp(QWidget):
     def __init__(self):
         super().__init__()
         self.movie_dict = {}
+        self.result_label = QLabel("")
         
         # Set up window
         self.setWindowTitle("Rudy's Awesome Media")
         self.setGeometry(100, 100, 400, 400)
         
         self.layout = QVBoxLayout()
+        
+        self.layout.addWidget(self.result_label)
         
         self.label = QLabel("Woah this is some really cool text.")
         self.layout.addWidget(self.label)
@@ -40,6 +45,10 @@ class MediaServerApp(QWidget):
             self.label.setText("Searching...")
             titles = scrape_movies(search_text)
             if titles:
+                if self.movie_dict:
+                    for movie_num in range(len(self.movie_dict)):
+                        self.layout.removeWidget(self.movie_dict[movie_num])
+                    self.movie_dict.clear()
                 temp = titles[:]
                 titles.clear()
                 for each in temp:
@@ -48,16 +57,18 @@ class MediaServerApp(QWidget):
                     else:
                         break
                 movie_count = str(len(titles))
-                self.layout.addWidget(QLabel("Movies Found: " + movie_count))
-                for movie_num,each in enumerate(titles):
-                    self.movie_dict[movie_num] = QPushButton(each)
-                    self.layout.addWidget(self.movie_dict[movie_num])
+                self.result_label.setText("Movies Found: " + movie_count)
+                for movie_num, title in enumerate(titles):
+                    movie_button = QPushButton(title)
+                    self.movie_dict[movie_num] = movie_button
+                    movie_button.clicked.connect(partial(self.on_movie_selected, title))
+                    self.layout.addWidget(movie_button)
             else:
                 self.label.setText("No results found.")
         else:
             self.label.setText("Please enter a search term.")
             
-    def on_movie_download_click(self, clicked_movie):
+    def on_movie_selected(self, title):
         options = webdriver.ChromeOptions()
         options.add_argument('user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36')
         options.add_argument('--headless')
@@ -65,19 +76,29 @@ class MediaServerApp(QWidget):
         options.add_argument('--disable-extensions')
         driver = webdriver.Chrome(options=options)
         
-        driver.get(f'https://flickystream.com/search?q={clicked_movie}')
+        driver.get(f'https://vidjoy.pro/discover?query={title}')
         driver.maximize_window()
         
+        xpath_query = f'//h1[@class="truncate" and @title="{title}"]'
         WebDriverWait(driver, 10).until(
-        EC.presence_of_all_elements_located((By.CSS_SELECTOR, 'h3.text-white.font-medium.line-clamp-1.text-balance'))
+        EC.presence_of_all_elements_located((By.XPATH, xpath_query))
     )
         
-        movie_to_click = driver.find_element(By.XPATH, '"radix-:r4k:-content-popular"]/div[1]/div[2]/div[1]/a/div[2]/h3')
+        movie_to_click = driver.find_element(By.XPATH, xpath_query)
         ActionChains(driver) \
             .move_to_element(movie_to_click) \
-            .click()
+            .click() \
+            .perform()
         
+        xpath_query = '//span[text()="Watch"]'
+        WebDriverWait(driver, 10).until(
+        EC.presence_of_all_elements_located((By.XPATH, xpath_query))
+    )
         
+        watch_button = driver.find_element(By.XPATH, xpath_query)
+        watch_button.click()
+        
+        driver.quit()
         
 def scrape_movies(search_text):
     options = webdriver.ChromeOptions()
@@ -87,14 +108,14 @@ def scrape_movies(search_text):
     options.add_argument('--disable-extensions')
     driver = webdriver.Chrome(options=options)
     
-    driver.get(f'https://flickystream.com/search?q={search_text}')
+    driver.get(f'https://vidjoy.pro/discover?query={search_text}')
     driver.maximize_window()
     
     WebDriverWait(driver, 10).until(
-        EC.presence_of_all_elements_located((By.CSS_SELECTOR, 'h3.text-white.font-medium.line-clamp-1.text-balance'))
+        EC.presence_of_all_elements_located((By.CSS_SELECTOR, 'h1.truncate'))
     )
     
-    movies = driver.find_elements(By.CSS_SELECTOR, 'h3.text-white.font-medium.line-clamp-1.text-balance')
+    movies = driver.find_elements(By.CSS_SELECTOR, 'h1.truncate')
     movies_titles = [movie.text for movie in movies]
     
     driver.quit()
