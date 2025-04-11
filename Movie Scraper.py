@@ -16,20 +16,20 @@ class MediaServerApp(QWidget):
         self.setWindowTitle("Rudy's Awesome Media")
         self.setGeometry(100, 100, 400, 400)
         
-        layout = QVBoxLayout()
+        self.layout = QVBoxLayout()
         
-        self.label = QLabel("Welcome to my server!")
-        layout.addWidget(self.label)
+        self.label = QLabel("Woah this is some really cool text.")
+        self.layout.addWidget(self.label)
         
         self.input_box = QLineEdit(self)
         self.input_box.setPlaceholderText("Type something here...")
-        layout.addWidget(self.input_box)
+        self.layout.addWidget(self.input_box)
         
         self.download_button = QPushButton("Search")
         self.download_button.clicked.connect(self.on_download_clicked)
-        layout.addWidget(self.download_button)
+        self.layout.addWidget(self.download_button)
         
-        self.setLayout(layout)
+        self.setLayout(self.layout)
         
     def on_download_clicked(self):
         search_text = self.input_box.text()
@@ -37,7 +37,18 @@ class MediaServerApp(QWidget):
             self.label.setText("Searching...")
             titles = scrape_movies(search_text)
             if titles:
-                self.label.setText("\n".join(titles))
+                temp = titles[:]
+                titles.clear()
+                for each in temp:
+                    if each != '':
+                        titles.append(each)
+                    else:
+                        break
+                movie_count = str(len(titles))
+                self.layout.addWidget(QLabel("Movies Found: " + movie_count))
+                for each in titles:
+                        self.layout.addWidget(QPushButton(each))
+                #self.label.setText("\n".join(titles))
             else:
                 self.label.setText("No results found.")
         else:
