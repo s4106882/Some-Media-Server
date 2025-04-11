@@ -6,11 +6,13 @@ from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.common.action_chains import ActionChains
 import sys
 
 class MediaServerApp(QWidget):
     def __init__(self):
         super().__init__()
+        self.movie_dict = {}
         
         # Set up window
         self.setWindowTitle("Rudy's Awesome Media")
@@ -30,7 +32,8 @@ class MediaServerApp(QWidget):
         self.layout.addWidget(self.download_button)
         
         self.setLayout(self.layout)
-        
+
+    
     def on_download_clicked(self):
         search_text = self.input_box.text()
         if search_text:
@@ -46,13 +49,35 @@ class MediaServerApp(QWidget):
                         break
                 movie_count = str(len(titles))
                 self.layout.addWidget(QLabel("Movies Found: " + movie_count))
-                for each in titles:
-                        self.layout.addWidget(QPushButton(each))
-                #self.label.setText("\n".join(titles))
+                for movie_num,each in enumerate(titles):
+                    self.movie_dict[movie_num] = QPushButton(each)
+                    self.layout.addWidget(self.movie_dict[movie_num])
             else:
                 self.label.setText("No results found.")
         else:
             self.label.setText("Please enter a search term.")
+            
+    def on_movie_download_click(self, clicked_movie):
+        options = webdriver.ChromeOptions()
+        options.add_argument('user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36')
+        options.add_argument('--headless')
+        options.add_argument('--disable-images')
+        options.add_argument('--disable-extensions')
+        driver = webdriver.Chrome(options=options)
+        
+        driver.get(f'https://flickystream.com/search?q={clicked_movie}')
+        driver.maximize_window()
+        
+        WebDriverWait(driver, 10).until(
+        EC.presence_of_all_elements_located((By.CSS_SELECTOR, 'h3.text-white.font-medium.line-clamp-1.text-balance'))
+    )
+        
+        movie_to_click = driver.find_element(By.XPATH, '"radix-:r4k:-content-popular"]/div[1]/div[2]/div[1]/a/div[2]/h3')
+        ActionChains(driver) \
+            .move_to_element(movie_to_click) \
+            .click()
+        
+        
         
 def scrape_movies(search_text):
     options = webdriver.ChromeOptions()
