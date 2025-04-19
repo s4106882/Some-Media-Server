@@ -10,6 +10,9 @@ from selenium.webdriver.common.action_chains import ActionChains
 import sys
 from functools import partial
 import requests
+import json
+from PyQt5.QtCore import QUrl
+from PyQt5.QtWebEngineWidgets import QWebEngineView
 
 class MediaServerApp(QWidget):
     def __init__(self):
@@ -43,7 +46,7 @@ class MediaServerApp(QWidget):
         search_text = self.input_box.text()
         if search_text:
             self.label.setText("Searching...")
-            titles = scrape_movies(search_text)
+            titles = self.scrape_movies(search_text)
             if titles:
                 if self.movie_dict:
                     for movie_num in range(len(self.movie_dict)):
@@ -68,6 +71,51 @@ class MediaServerApp(QWidget):
         else:
             self.label.setText("Please enter a search term.")
             
+    def on_movie_selected(self, title):
+        pass
+        #res = requests.get(f'https://moviesapi.club/movie/{self.title_to_url[title]}')
+        #print(f"Status code: {res.status_code}")
+        #print(f"Content: {res.text[:500]}") 
+        
+            
+    def scrape_movies(self, search_text):
+        options = webdriver.ChromeOptions()
+        options.add_argument('user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36')
+        options.add_argument('--headless')
+        options.add_argument('--disable-images')
+        options.add_argument('--disable-extensions')
+        driver = webdriver.Chrome(options=options)
+    
+        driver.get(f'https://www.imdb.com/find/?q={search_text}&ref_=nv_sr_sm')
+        driver.maximize_window()
+    
+        WebDriverWait(driver, 10).until(
+            EC.presence_of_all_elements_located((By.CSS_SELECTOR, "a.ipc-metadata-list-summary-item__t"))
+        )
+    
+        movies = driver.find_elements(By.CSS_SELECTOR, "a.ipc-metadata-list-summary-item__t")
+    
+        movie_url_list = []
+        self.title_to_url = {}
+    
+        for link in movies:
+            movie_url = link.get_attribute('href')
+            movie_url_list.append(movie_url)
+        for index, each in enumerate(movie_url_list):
+            split_url = each.split('/')
+            movie_url_list[index] = split_url[4]
+        for each in movie_url_list[:]:
+            if 'nm' in each:
+                movie_url_list.remove(each)
+
+        movies_titles = [movie.text for movie in movies]
+        for i in range(len(movie_url_list)):
+            self.title_to_url[movies_titles[i]] = movie_url_list[i]
+    
+        driver.quit()
+        return movies_titles
+
+    '''        
     def on_movie_selected(self, title):
         options = webdriver.ChromeOptions()
         options.add_argument('user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36')
@@ -99,7 +147,7 @@ class MediaServerApp(QWidget):
         watch_button.click()
         
         driver.quit()
-        
+  
 def scrape_movies(search_text):
     options = webdriver.ChromeOptions()
     options.add_argument('user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36')
@@ -120,7 +168,7 @@ def scrape_movies(search_text):
     
     driver.quit()
     return movies_titles
-
+'''
 if __name__ == '__main__':
     app = QApplication(sys.argv)
     window = MediaServerApp()
