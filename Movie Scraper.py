@@ -1,28 +1,28 @@
 from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QPushButton, QLabel, QLineEdit
-from PyQt5.QtCore import Qt
+from PyQt5.QtCore import Qt, QUrl
+from PyQt5.QtWebEngineWidgets import QWebEngineView
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.common.action_chains import ActionChains
 import sys
 from functools import partial
-import requests
-import json
-from PyQt5.QtCore import QUrl
-from PyQt5.QtWebEngineWidgets import QWebEngineView
+import platform
+import subprocess
 
 class MediaServerApp(QWidget):
     def __init__(self):
         super().__init__()
         self.movie_dict = {}
         self.result_label = QLabel("")
+        self.movie_exists = False
+        self.param = '-n' if platform.system().lower() == 'windows' else '-c'
         
         # Set up window
         self.setWindowTitle("Rudy's Awesome Media")
-        self.setGeometry(100, 100, 400, 400)
+        self.setGeometry(400, 200, 1024, 768)
         
         self.layout = QVBoxLayout()
         
@@ -72,11 +72,29 @@ class MediaServerApp(QWidget):
             self.label.setText("Please enter a search term.")
             
     def on_movie_selected(self, title):
-        pass
-        #res = requests.get(f'https://moviesapi.club/movie/{self.title_to_url[title]}')
-        #print(f"Status code: {res.status_code}")
-        #print(f"Content: {res.text[:500]}") 
+        if self.movie_exists:
+            self.layout.removeWidget(self.browser)
+        self.browser = QWebEngineView()
+        self.layout.addWidget(self.browser)
+        self.movie_exists = True
         
+        #TODO: Add list of actual hosts
+        host_list = {'imdb.com': True, 'youtube.com': False}
+        
+        for host in host_list.keys():
+            command = ['ping', self.param, '1', host]
+            if subprocess.call(command) == 0:
+                host_list[host] = True
+            else:
+                host_list[host] = False
+        
+        for host, status in host_list.values():
+            if status == True:
+                # Check if host has movie in database
+                pass
+        
+        #TODO: Add proxy
+        self.browser.setUrl(QUrl(f'imdb.com/movies/{self.title_to_url[title]}'))
             
     def scrape_movies(self, search_text):
         options = webdriver.ChromeOptions()
@@ -115,60 +133,6 @@ class MediaServerApp(QWidget):
         driver.quit()
         return movies_titles
 
-    '''        
-    def on_movie_selected(self, title):
-        options = webdriver.ChromeOptions()
-        options.add_argument('user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36')
-        options.add_argument('--headless')
-        options.add_argument('--disable-images')
-        options.add_argument('--disable-extensions')
-        driver = webdriver.Chrome(options=options)
-        
-        driver.get(f'https://vidjoy.pro/discover?query={title}')
-        driver.maximize_window()
-        
-        xpath_query = f'//h1[@class="truncate" and @title="{title}"]'
-        WebDriverWait(driver, 10).until(
-        EC.presence_of_all_elements_located((By.XPATH, xpath_query))
-    )
-        
-        movie_to_click = driver.find_element(By.XPATH, xpath_query)
-        ActionChains(driver) \
-            .move_to_element(movie_to_click) \
-            .click() \
-            .perform()
-        
-        xpath_query = '//span[text()="Watch"]'
-        WebDriverWait(driver, 10).until(
-        EC.presence_of_all_elements_located((By.XPATH, xpath_query))
-    )
-        
-        watch_button = driver.find_element(By.XPATH, xpath_query)
-        watch_button.click()
-        
-        driver.quit()
-  
-def scrape_movies(search_text):
-    options = webdriver.ChromeOptions()
-    options.add_argument('user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36')
-    options.add_argument('--headless')
-    options.add_argument('--disable-images')
-    options.add_argument('--disable-extensions')
-    driver = webdriver.Chrome(options=options)
-    
-    driver.get(f'https://vidjoy.pro/discover?query={search_text}')
-    driver.maximize_window()
-    
-    WebDriverWait(driver, 10).until(
-        EC.presence_of_all_elements_located((By.CSS_SELECTOR, 'h1.truncate'))
-    )
-    
-    movies = driver.find_elements(By.CSS_SELECTOR, 'h1.truncate')
-    movies_titles = [movie.text for movie in movies]
-    
-    driver.quit()
-    return movies_titles
-'''
 if __name__ == '__main__':
     app = QApplication(sys.argv)
     window = MediaServerApp()
